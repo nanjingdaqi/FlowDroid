@@ -18,6 +18,8 @@ import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
 import soot.Type;
+import soot.Unit;
+import soot.Value;
 import soot.VoidType;
 import soot.javaToJimple.LocalGenerator;
 import soot.jimple.Jimple;
@@ -28,6 +30,8 @@ import soot.jimple.Stmt;
 import soot.jimple.infoflow.android.entryPointCreators.AndroidEntryPointConstants;
 import soot.jimple.infoflow.cfg.LibraryClassPatcher;
 import soot.jimple.infoflow.entryPointCreators.SimulatedCodeElementTag;
+import soot.jimple.internal.JInvokeStmt;
+import soot.util.Chain;
 import soot.util.MultiMap;
 
 /**
@@ -106,6 +110,51 @@ public class ActivityEntryPointCreator extends AbstractComponentEntryPointCreato
 				searchAndBuildMethod(AndroidEntryPointConstants.ACTIVITYLIFECYCLECALLBACK_ONACTIVITYCREATED,
 						callbackClass, localVarsForClasses.get(callbackClass), currentClassSet);
 			}
+
+            SootMethod sm = findMethod(component, AndroidEntryPointConstants.ACTIVITY_ONCREATE);
+			Body bd = sm.retrieveActiveBody();
+//            logger.info("daqi - body: " + bd);
+			Chain<Unit> units = bd.getUnits();
+			boolean findBindInvok = false;
+			for (Unit u : units) {
+                logger.info("daqi - unit: " + u.getClass() + ",  " + u);
+                if (u instanceof JInvokeStmt) {
+                	JInvokeStmt stmt = (JInvokeStmt) u;
+                	SootMethod sm2 = stmt.getInvokeExpr().getMethod();
+//                    logger.info("daqi - sm2: " + " cls: " + sm2.getDeclaringClass() + ", name: " + sm2.getName());
+                    if (sm2.getDeclaringClass().getName().equals("butterknife.ButterKnife")
+					&& sm2.getName().equals("bind")) {
+                    	logger.info("daqi - find bind invoke");
+                        findBindInvok = true;
+                        break;
+					}
+				}
+			}
+			if (findBindInvok) {
+			    String clsName = component.getName() + "_" + "ViewBinding";
+			    SootClass sc = Scene.v().getSootClass(clsName);
+			    List<SootMethod> sms = sc.getMethods();
+				for (SootMethod sm3 : sms) {
+                    logger.info("daqi - sm: " + sm3);
+				}
+			    SootMethod sm3 = sc.getMethod("void <init>(" + component.getName() + ",android.view.View)");
+			    LocalGenerator lg = new LocalGenerator(bd);
+			    Local l1 = lg.generateLocal(RefType.v(sc));
+			    Local l2 = lg.generateLocal(RefType.v(component.getName()));
+                Local l3 = lg.generateLocal(RefType.v("android.view.View"));
+                List<Value> args = new ArrayList<>();
+                args.add(l2);
+                args.add(l3);
+                Unit lst = bd.getUnits().getLast();
+                bd.getUnits().removeLast();
+                bd.getUnits().add(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(l1, sm3.makeRef(), args)));
+                bd.getUnits().add(lst);
+//                bd.getUnits().add(Jimple.v().newVirtualInvokeExpr(thisLocal, ))
+//				l = lg.generateLocal(RefType.v("java.lang.Object"));
+//			    bd.getUnits().add(Jimple.v().newAssignStmt(l, Jimple.v().newNewExpr(RefType.v(clsName))));
+			}
+
+			logger.debug("daqi - new body: " + bd);
 		}
 
 		// Adding the lifecycle of the Fragments that belong to this Activity:
