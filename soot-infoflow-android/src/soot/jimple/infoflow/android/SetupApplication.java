@@ -1280,6 +1280,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 *                                be read.
 	 */
 	public InfoflowResults runInfoflow() throws IOException, XmlPullParserException {
+		logger.info("daqi - runInfoflow 1");
 		// If we don't have a source/sink file by now, we cannot run the data
 		// flow analysis
 		String sourceSinkFile = config.getAnalysisFileConfig().getSourceSinkFile();
