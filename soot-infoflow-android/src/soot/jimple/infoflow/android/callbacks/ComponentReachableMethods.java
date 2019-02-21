@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import soot.Kind;
 import soot.MethodOrMethodContext;
 import soot.RefType;
@@ -78,12 +80,14 @@ public class ComponentReachableMethods {
 	}
 
 	public void update() {
+		final Logger logger = LoggerFactory.getLogger(getClass());
 		while (unprocessedMethods.hasNext()) {
 			MethodOrMethodContext m = unprocessedMethods.next();
 			Filter filter = new Filter(new EdgePredicate() {
 
 				@Override
 				public boolean want(Edge e) {
+//					logger.info("daqi - edge: " + e);
 					if (e.kind() == Kind.CLINIT)
 						return false;
 					else if (e.kind() == Kind.VIRTUAL) {

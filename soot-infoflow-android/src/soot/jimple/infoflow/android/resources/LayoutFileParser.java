@@ -33,6 +33,8 @@ import soot.jimple.infoflow.android.resources.controls.LayoutControlFactory;
 import soot.util.HashMultiMap;
 import soot.util.MultiMap;
 
+import static soot.jimple.infoflow.android.SetupApplication.L;
+
 /**
  * Parser for analyzing the layout XML files inside an android application
  * 
@@ -87,7 +89,7 @@ public class LayoutFileParser extends AbstractResourceParser {
 		if (!isRealClass(sc))
 			sc = Scene.v().forceResolve("android.webkit." + className, SootClass.BODIES);
 		if (!isRealClass(sc)) {
-			logger.warn(String.format("Could not find layout class %s", className));
+//			logger.warn(String.format("Could not find layout class %s", className));
 			return null;
 		}
 		return sc;
@@ -156,6 +158,7 @@ public class LayoutFileParser extends AbstractResourceParser {
 	 */
 	private void addFragment(String layoutFile, SootClass fragment) {
 		// Do not add null fragments
+		logger.info("daqi - addFragment: " + fragment, new Exception(""));
 		if (fragment == null)
 			return;
 

@@ -34,6 +34,8 @@ import soot.jimple.internal.JInvokeStmt;
 import soot.util.Chain;
 import soot.util.MultiMap;
 
+import static soot.jimple.infoflow.android.SetupApplication.L;
+
 /**
  * Entry point creator for Android activities
  * 
@@ -105,12 +107,36 @@ public class ActivityEntryPointCreator extends AbstractComponentEntryPointCreato
 
 		// 1. onCreate:
 		{
+		    // reachable true
+//			{
+//				 Chain<SootClass> clses = Scene.v().getClasses();
+//				 for (SootClass cls : clses) {
+//				 if (!cls.getName().contains("org.peace") || cls.getName().contains(".R")) continue;
+//				 L("on_create 0", "Handling cls: " + cls);
+//				 for (SootMethod sm : cls.getMethods()) {
+//				 L("on_create 0", "Handling sm: " + sm + ", body: " + sm.hasActiveBody());
+//				 }
+//				 }
+//			}
 			searchAndBuildMethod(AndroidEntryPointConstants.ACTIVITY_ONCREATE, component, thisLocal);
 			for (SootClass callbackClass : this.activityLifecycleCallbacks.keySet()) {
 				searchAndBuildMethod(AndroidEntryPointConstants.ACTIVITYLIFECYCLECALLBACK_ONACTIVITYCREATED,
 						callbackClass, localVarsForClasses.get(callbackClass), currentClassSet);
 			}
 
+			// reachable true
+//			{
+//				Chain<SootClass> clses = Scene.v().getClasses();
+//				for (SootClass cls : clses) {
+//					if (!cls.getName().contains("org.peace") || cls.getName().contains(".R")) continue;
+//					L("on_create 1", "Handling cls: " + cls);
+//					for (SootMethod sm : cls.getMethods()) {
+//						L("on_create 1", "Handling sm: " + sm + ", body: " + sm.hasActiveBody());
+//					}
+//				}
+//			}
+
+			/**
             SootMethod sm = findMethod(component, AndroidEntryPointConstants.ACTIVITY_ONCREATE);
 			Body bd = sm.retrieveActiveBody();
 //            logger.info("daqi - body: " + bd);
@@ -149,12 +175,10 @@ public class ActivityEntryPointCreator extends AbstractComponentEntryPointCreato
                 bd.getUnits().removeLast();
                 bd.getUnits().add(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(l1, sm3.makeRef(), args)));
                 bd.getUnits().add(lst);
-//                bd.getUnits().add(Jimple.v().newVirtualInvokeExpr(thisLocal, ))
-//				l = lg.generateLocal(RefType.v("java.lang.Object"));
-//			    bd.getUnits().add(Jimple.v().newAssignStmt(l, Jimple.v().newNewExpr(RefType.v(clsName))));
 			}
 
 			logger.debug("daqi - new body: " + bd);
+			 **/
 		}
 
 		// Adding the lifecycle of the Fragments that belong to this Activity:
@@ -294,6 +318,19 @@ public class ActivityEntryPointCreator extends AbstractComponentEntryPointCreato
 			searchAndBuildMethod(AndroidEntryPointConstants.ACTIVITYLIFECYCLECALLBACK_ONACTIVITYDESTROYED,
 					callbackClass, localVarsForClasses.get(callbackClass), currentClassSet);
 		}
+
+		/** reachable false
+		{
+			Chain<SootClass> clses = Scene.v().getClasses();
+			for (SootClass cls : clses) {
+				if (!cls.getName().contains("org.peace") || cls.getName().contains(".R")) continue;
+				L("on_create 2", "Handling cls: " + cls);
+				for (SootMethod sm : cls.getMethods()) {
+					L("on_create 2", "Handling sm: " + sm + ", body: " + sm.hasActiveBody());
+				}
+			}
+		}
+		 **/
 	}
 
 	/**

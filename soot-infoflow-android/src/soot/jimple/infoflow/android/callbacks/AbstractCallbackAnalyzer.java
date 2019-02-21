@@ -584,6 +584,7 @@ public abstract class AbstractCallbackAnalyzer {
 
 		// Iterate over all user-implemented methods. If they are inherited
 		// from a system class, they are callback candidates.
+		/**
 		for (SootClass parentClass : Scene.v().getActiveHierarchy().getSubclassesOfIncluding(sootClass)) {
 			if (SystemClassHandler.isClassInSystemPackage(parentClass.getName()))
 				continue;
@@ -596,6 +597,7 @@ public abstract class AbstractCallbackAnalyzer {
 				}
 			}
 		}
+		 **/
 	}
 
 	private SootMethod getMethodFromHierarchyEx(SootClass c, String methodSignature) {
@@ -628,6 +630,13 @@ public abstract class AbstractCallbackAnalyzer {
 
 		// If we are a class, one of our superclasses might implement an Android
 		// interface
+		logger.info("daqi - cb_analy: base_cls: " + baseClass);
+		for (SootMethod mt : baseClass.getMethods()) {
+			logger.info("daqi - mt: " + mt);
+		}
+		for (SootClass i : collectAllInterfaces(sootClass)) {
+            logger.info("daqi - if: " + i);
+        }
 		SootClass superClass = sootClass.getSuperclassUnsafe();
 		if (superClass != null)
 			analyzeClassInterfaceCallbacks(baseClass, superClass, lifecycleElement);
@@ -640,6 +649,14 @@ public abstract class AbstractCallbackAnalyzer {
 				for (SootMethod sm : i.getMethods()) {
 					SootMethod callbackImplementation = getMethodFromHierarchyEx(baseClass, sm.getSubSignature());
 					if (callbackImplementation != null)
+						if (baseClass != sootClass && baseClass.getMethodByNameUnsafe(sm.getName()) == null) {
+							SootMethod sm2 = new SootMethod(callbackImplementation.getName(),
+									callbackImplementation.getParameterTypes(), callbackImplementation.getReturnType());
+							sm2.setActiveBody(callbackImplementation.retrieveActiveBody());
+							baseClass.addMethod(sm2);
+							logger.info("daqi - add mt: " + sm2);
+							callbackImplementation = sm2;
+						}
 						checkAndAddMethod(callbackImplementation, sm, lifecycleElement, callbackType);
 				}
 			}
