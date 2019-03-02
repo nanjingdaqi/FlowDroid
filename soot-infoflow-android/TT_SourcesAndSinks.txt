@@ -25,8 +25,9 @@
 <android.content.pm.PackageManager: java.util.List getInstalledApplications(int)> -> _SOURCE_
 <android.content.pm.PackageManager: java.util.List getInstalledPackages(int)> -> _SOURCE_
 
-<android.content.ClipboardManager: android.content.ClipData getPrimaryClip()> -> _SOURCE_
-<android.content.ClipboardManager: android.content.ClipDescription getPrimaryClipDescription()> -> _SOURCE_
+<android.content.ClipData: android.content.ClipData$Item getItemAt(int)> -> _SOURCE_
+<android.content.ClipData$Item: java.lang.CharSequence getText()> -> _SOURCE_
+<android.content.ClipData$Item: java.lang.String getHtmlText()> -> _SOURCE_
 
 <android.media.AudioRecord: int read(short[],int,int)> -> _SOURCE_
 <android.media.AudioRecord: int read(byte[],int,int)> -> _SOURCE_
@@ -36,14 +37,9 @@
 <android.telephony.gsm.GsmCellLocation: int getCid()> -> _SOURCE_
 <android.telephony.gsm.GsmCellLocation: int getLac()> -> _SOURCE_
 
-<android.database.Cursor: java.lang.String getString(int)> -> _SOURCE_
-
 <java.util.Calendar: java.util.TimeZone getTimeZone()> -> _SOURCE_
 <android.provider.Browser: android.database.Cursor getAllBookmarks()> -> _SOURCE_
 <android.provider.Browser: android.database.Cursor getAllVisitedUrls()> -> _SOURCE_
-
-<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)> -> _SOURCE_
-<android.content.ContentResolver: android.database.Cursor query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String,android.os.CancellationSignal)> -> _SOURCE_
 
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 
@@ -104,18 +100,19 @@
 <android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putLong(java.lang.String,long)> -> _SINK_
 <android.content.SharedPreferences$Editor: android.content.SharedPreferences$Editor putString(java.lang.String,java.lang.String)> -> _SINK_
 
-<java.net.URL: <init>(java.lang.String)> -> _SINK_
-<java.net.URL: <init>(java.net.URL,java.lang.String)> -> _SINK_
-<java.net.URL: <init>(java.net.URL,java.lang.String,java.net.URLStreamHandler)> -> _SINK_
-<java.net.URL: <init>(java.lang.String,java.lang.String,java.lang.String)> -> _SINK_
-<java.net.URL: <init>(java.lang.String,java.lang.String,int,java.lang.String)> -> _SINK_
-<java.net.URL: <init>(java.lang.String,java.lang.String,int,java.lang.String,java.net.URLStreamHandler)> -> _SINK_
+<java.net.URL: void <init>(java.lang.String)> -> _SINK_
+<java.net.URL: void <init>(java.net.URL,java.lang.String)> -> _SINK_
+<java.net.URL: void <init>(java.net.URL,java.lang.String,java.net.URLStreamHandler)> -> _SINK_
+<java.net.URL: void <init>(java.lang.String,java.lang.String,java.lang.String)> -> _SINK_
+<java.net.URL: void <init>(java.lang.String,java.lang.String,int,java.lang.String)> -> _SINK_
+<java.net.URL: void <init>(java.lang.String,java.lang.String,int,java.lang.String,java.net.URLStreamHandler)> -> _SINK_
 
 <java.net.URLConnection: setRequestProperty(java.lang.String,java.lang.String)> -> _SINK_
 
 <okhttp3.Request$Builder: okhttp3.Request$Builder url(java.lang.String)> -> _SINK_
-<okhttp3.Request$Builder: okhttp3.Request$Builder header(java.lang.String)> -> _SINK_
-<okhttp3.Request$Builder: okhttp3.Request$Builder addHeader(java.lang.String)> -> _SINK_
+<okhttp3.Request$Builder: okhttp3.Request$Builder header(java.lang.String,java.lang.String)> -> _SINK_
+<okhttp3.Request$Builder: okhttp3.Request$Builder addHeader(java.lang.String,java.lang.String)> -> _SINK_
+
 <okhttp3.HttpUrl$Builder: okhttp3.HttpUrl$Builder addPathSegments(java.lang.String)> -> _SINK_
 <okhttp3.HttpUrl$Builder: okhttp3.HttpUrl$Builder addPathSegments(java.lang.String,boolean)> -> _SINK_
 <okhttp3.HttpUrl$Builder: okhttp3.HttpUrl$Builder addEncodedPathSegments(java.lang.String)> -> _SINK_
@@ -129,6 +126,7 @@
 <okhttp3.HttpUrl$Builder: okhttp3.HttpUrl$Builder setQueryParameter(java.lang.String,java.lang.String)> -> _SINK_
 <okhttp3.HttpUrl$Builder: okhttp3.HttpUrl$Builder setEncodedQueryParameter(java.lang.String,java.lang.String)> -> _SINK_
 <okhttp3.HttpUrl$Builder: okhttp3.HttpUrl$Builder addEncodedQueryParameter(java.lang.String,java.lang.String)> -> _SINK_
+
 <okhttp3.RequestBody: okhttp3.RequestBody create(okhttp3.MediaType,java.lang.String)> -> _SINK_
 <okhttp3.RequestBody: okhttp3.RequestBody create(okhttp3.MediaType,okio.ByteString)> -> _SINK_
 <okhttp3.RequestBody: okhttp3.RequestBody create(okhttp3.MediaType,byte[])> -> _SINK_
