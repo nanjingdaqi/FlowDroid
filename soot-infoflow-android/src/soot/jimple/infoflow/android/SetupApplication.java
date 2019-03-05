@@ -443,7 +443,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 */
 	private void calculateCallbacks(ISourceSinkDefinitionProvider sourcesAndSinks)
 			throws IOException, XmlPullParserException {
-		calculateCallbacks(sourcesAndSinks, null);
+		calculateCallbacks(sourcesAndSinks, null, null);
 	}
 
 	/**
@@ -459,7 +459,8 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 * @throws XmlPullParserException Thrown if the Android manifest file could not
 	 *                                be read.
 	 */
-	private void calculateCallbacks(ISourceSinkDefinitionProvider sourcesAndSinks, SootClass entryPoint)
+	private void calculateCallbacks(ISourceSinkDefinitionProvider sourcesAndSinks, SootClass entryPoint,
+									List<SootClass> includingEntrypoints)
 			throws IOException, XmlPullParserException {
 		// Add the callback methods
 		LayoutFileParser lfp = null;
@@ -470,10 +471,10 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 				lfp = createLayoutFileParser();
 				switch (config.getCallbackConfig().getCallbackAnalyzer()) {
 				case Fast:
-					calculateCallbackMethodsFast(lfp, entryPoint);
+					calculateCallbackMethodsFast(lfp, entryPoint, includingEntrypoints);
 					break;
 				case Default:
-					calculateCallbackMethods(lfp, entryPoint);
+					calculateCallbackMethods(lfp, entryPoint, includingEntrypoints);
 					break;
 				default:
 					throw new RuntimeException("Unknown callback analyzer");
@@ -481,7 +482,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			}
 		} else if (config.getSootIntegrationMode().needsToBuildCallgraph()) {
 			// Create the new iteration of the main method
-			createMainMethod(null);
+			createMainMethod(null, null);
 			constructCallgraphInternal();
 		}
 
@@ -492,8 +493,14 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			Set<CallbackDefinition> callbacks;
 			if (entryPoint == null)
 				callbacks = this.callbackMethods.values();
-			else
+			else if (includingEntrypoints == null)
 				callbacks = this.callbackMethods.get(entryPoint);
+			else {
+				callbacks = new HashSet<>();
+				for (SootClass includingEntrypoint : includingEntrypoints) {
+					callbacks.addAll(this.callbackMethods.get(includingEntrypoint));
+				}
+			}
 
 			// Create the SourceSinkManager
 			sourceSinkManager = createSourceSinkManager(lfp, callbacks);
@@ -598,7 +605,8 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 *                  Pass null to compute callbacks for all components.
 	 * @throws IOException Thrown if a required configuration cannot be read
 	 */
-	private void calculateCallbackMethods(LayoutFileParser lfp, SootClass component) throws IOException {
+	private void calculateCallbackMethods(LayoutFileParser lfp, SootClass component,
+										  List<SootClass> includingComponents) throws IOException {
 		final CallbackConfiguration callbackConfig = config.getCallbackConfig();
 
 		// Load the APK file
@@ -610,7 +618,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 		PackManager.v().getPack("wjtp").remove("wjtp.ajc");
 
 		// Get the classes for which to find callbacks
-		Set<SootClass> entryPointClasses = getComponentsToAnalyze(component);
+		Set<SootClass> entryPointClasses = getComponentsToAnalyze(component, includingComponents);
 
 		// Collect the callback interfaces implemented in the app's
 		// source code. Note that the filters should know all components to
@@ -660,7 +668,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 				}
 
 				// Create the new iteration of the main method
-				createMainMethod(component);
+				createMainMethod(component, includingComponents);
 
 				// Since the gerenation of the main method can take some time,
 				// we check again whether we need to stop.
@@ -907,14 +915,15 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 *                   null to calculate callbacks for all entry points.
 	 * @throws IOException Thrown if a required configuration cannot be read
 	 */
-	private void calculateCallbackMethodsFast(LayoutFileParser lfp, SootClass component) throws IOException {
+	private void calculateCallbackMethodsFast(LayoutFileParser lfp, SootClass component,
+											  List<SootClass> includingComponents) throws IOException {
 		// Construct the current callgraph
 		releaseCallgraph();
-		createMainMethod(component);
+		createMainMethod(component, includingComponents);
 		constructCallgraphInternal();
 
 		// Get the classes for which to find callbacks
-		Set<SootClass> entryPointClasses = getComponentsToAnalyze(component);
+		Set<SootClass> entryPointClasses = getComponentsToAnalyze(component, includingComponents);
 
 		// Collect the callback interfaces implemented in the app's
 		// source code
@@ -938,7 +947,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 
 		// Construct the final callgraph
 		releaseCallgraph();
-		createMainMethod(component);
+		createMainMethod(component, includingComponents);
 		constructCallgraphInternal();
 	}
 
@@ -995,7 +1004,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 * @param The class name of a component to create a main method containing only
 	 *            that component, or null to create main method for all components
 	 */
-	private void createMainMethod(SootClass component) {
+	private void createMainMethod(SootClass component, List<SootClass> includingComponents) {
 		// There is no need to create a main method if we don't want to generate
 		// a callgraph
 		if (config.getSootIntegrationMode() == SootIntegrationMode.UseExistingCallgraph)
@@ -1003,7 +1012,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 
 		// Always update the entry point creator to reflect the newest set
 		// of callback methods
-		entryPointCreator = createEntryPointCreator(component);
+		entryPointCreator = createEntryPointCreator(component, includingComponents);
 		SootMethod dummyMainMethod = entryPointCreator.createDummyMain();
 		Scene.v().setEntryPoints(Collections.singletonList(dummyMainMethod));
 		if (!dummyMainMethod.getDeclaringClass().isInScene())
@@ -1353,10 +1362,30 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			List<SootClass> entrypointWorklist = new ArrayList<>(entrypoints);
 			while (!entrypointWorklist.isEmpty()) {
 				SootClass entrypoint = entrypointWorklist.remove(0);
-				processEntryPoint(sourcesAndSinks, resultAggregator, entrypointWorklist.size(), entrypoint);
+				processEntryPoint(sourcesAndSinks, resultAggregator, entrypointWorklist.size(), entrypoint, null);
+			}
+		} else if (config.getComponentCountPerTime() > 0) {
+            final int count = config.getComponentCountPerTime();
+			List<SootClass> entrypointWorklist = new ArrayList<>(entrypoints);
+			List<SootClass> targetEntrypoints = new ArrayList<>(count);
+			int i = 0;
+			while (!entrypointWorklist.isEmpty()) {
+				SootClass entrypoint = entrypointWorklist.remove(0);
+				targetEntrypoints.add(entrypoint);
+				if (++i == count) {
+					i = 0;
+					String info = "[";
+					for (SootClass ep : targetEntrypoints) {
+                        info += ep.getName() + ", ";
+					}
+					info += "]";
+					logger.warn("daqi, running on components: " + info);
+					processEntryPoint(sourcesAndSinks, resultAggregator, -1, null, targetEntrypoints);
+					targetEntrypoints.clear();
+				}
 			}
 		} else
-			processEntryPoint(sourcesAndSinks, resultAggregator, -1, null);
+			processEntryPoint(sourcesAndSinks, resultAggregator, -1, null, null);
 
 		// Write the results to disk if requested
 		serializeResults(resultAggregator.getAggregatedResults(), resultAggregator.getLastICFG());
@@ -1378,7 +1407,8 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 * @param entrypoint       The current entry point to analyze
 	 */
 	protected void processEntryPoint(ISourceSinkDefinitionProvider sourcesAndSinks,
-			MultiRunResultAggregator resultAggregator, int numEntryPoints, SootClass entrypoint) {
+			MultiRunResultAggregator resultAggregator, int numEntryPoints, SootClass entrypoint,
+									 List<SootClass> targetEntrypoints) {
 		long beforeEntryPoint = System.nanoTime();
 
 		// Get rid of leftovers from the last entry point
@@ -1388,7 +1418,9 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 		long callbackDuration = System.nanoTime();
 		try {
 			if (config.getOneComponentAtATime())
-				calculateCallbacks(sourcesAndSinks, entrypoint);
+				calculateCallbacks(sourcesAndSinks, entrypoint, null);
+			else if (config.getComponentCountPerTime() > 0)
+				calculateCallbacks(sourcesAndSinks, null, targetEntrypoints);
 			else
 				calculateCallbacks(sourcesAndSinks);
 		} catch (IOException | XmlPullParserException e) {
@@ -1406,6 +1438,8 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			logger.info("Running data flow analysis on {} (component {}/{}: {}) with {} sources and {} sinks...",
 					apkFileLocation, (entrypoints.size() - numEntryPoints), entrypoints.size(), entrypoint,
 					sources == null ? 0 : sources.size(), sinks == null ? 0 : sinks.size());
+		else if (config.getComponentCountPerTime() > 0)
+			logger.info("Running data flow analysis with {} components per time", config.getComponentCountPerTime());
 		else
 			logger.info("Running data flow analysis on {} with {} sources and {} sinks...", apkFileLocation,
 					sources == null ? 0 : sources.size(), sinks == null ? 0 : sinks.size());
@@ -1414,7 +1448,10 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 		// analyze all components together, we do not need a new callgraph,
 		// but can reuse the one from the callback collection phase.
 		if (config.getOneComponentAtATime() && config.getSootIntegrationMode().needsToBuildCallgraph()) {
-			createMainMethod(entrypoint);
+			createMainMethod(entrypoint, null);
+			constructCallgraphInternal();
+		} else if (config.getComponentCountPerTime() > 0) {
+			createMainMethod(null, targetEntrypoints);
 			constructCallgraphInternal();
 		}
 
@@ -1563,8 +1600,8 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 * @return The {@link AndroidEntryPointCreator} responsible for generating the
 	 *         dummy main method
 	 */
-	private AndroidEntryPointCreator createEntryPointCreator(SootClass component) {
-		Set<SootClass> components = getComponentsToAnalyze(component);
+	private AndroidEntryPointCreator createEntryPointCreator(SootClass component, List<SootClass> includingComponents) {
+		Set<SootClass> components = getComponentsToAnalyze(component, includingComponents);
 
 		// If we we already have an entry point creator, we make sure to clean up our
 		// leftovers from previous runs
@@ -1608,15 +1645,16 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 *                  application class (if any), or null to analyze all classes.
 	 * @return The set of classes to analyze
 	 */
-	private Set<SootClass> getComponentsToAnalyze(SootClass component) {
-		if (component == null)
+	private Set<SootClass> getComponentsToAnalyze(SootClass component, List<SootClass> includingComponents) {
+		if (component == null && includingComponents == null)
 			return this.entrypoints;
 		else {
 			// We always analyze the application class together with each
 			// component
 			// as there might be interactions between the two
 			Set<SootClass> components = new HashSet<>(2);
-			components.add(component);
+			if (includingComponents == null) components.add(component);
+			else components.addAll(includingComponents);
 
 			String applicationName = manifest.getApplicationName();
 			if (applicationName != null && !applicationName.isEmpty())

@@ -92,6 +92,7 @@ public class MainClass {
 	private static final String OPTION_COMPUTE_PATHS = "cp";
 	private static final String OPTION_ONE_SOURCE = "os";
 	private static final String OPTION_ONE_COMPONENT = "ot";
+	private static final String OPTION_COMPONENT_COUNT_PER_TIME = "ccpt";
 	private static final String OPTION_SEQUENTIAL_PATHS = "sp";
 	private static final String OPTION_LOG_SOURCES_SINKS = "ls";
 	private static final String OPTION_MERGE_DEX_FILES = "d";
@@ -177,6 +178,7 @@ public class MainClass {
 		options.addOption("mt", "maxthreadnum", true, "Limit the maximum number of threads to the given value");
 		options.addOption(OPTION_ONE_COMPONENT, "onecomponentatatime", false,
 				"Analyze one Android component at a time");
+		options.addOption(OPTION_COMPONENT_COUNT_PER_TIME, "componentcount", true, "每次运行的组件数量");
 		options.addOption(OPTION_ONE_SOURCE, "onesourceatatime", false, "Analyze one source at a time");
 		options.addOption(OPTION_SEQUENTIAL_PATHS, "sequentialpathprocessing", false,
 				"Process the result paths sequentially instead of in parallel");
@@ -682,6 +684,11 @@ public class MainClass {
 			Integer timeout = getIntOption(cmd, OPTION_RESULT_TIMEOUT);
 			if (timeout != null)
 				config.getPathConfiguration().setPathReconstructionTimeout(timeout);
+		}
+		{
+			Integer count = getIntOption(cmd, OPTION_COMPONENT_COUNT_PER_TIME);
+			if (count != null)
+				config.setComponentCountPerTime(count);
 		}
 
 		// Optional features

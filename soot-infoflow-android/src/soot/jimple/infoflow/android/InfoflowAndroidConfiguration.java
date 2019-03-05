@@ -899,6 +899,8 @@ public class InfoflowAndroidConfiguration extends InfoflowConfiguration {
 
 	private boolean oneComponentAtATime = false;
 
+	private int componentCountPerTime = 0;
+
 	private final CallbackConfiguration callbackConfig = new CallbackConfiguration();
 	private final SourceSinkConfiguration sourceSinkConfig = new SourceSinkConfiguration();
 	private final IccConfiguration iccConfig = new IccConfiguration();
@@ -980,6 +982,14 @@ public class InfoflowAndroidConfiguration extends InfoflowConfiguration {
 	 */
 	public void setOneComponentAtATime(boolean oneComponentAtATime) {
 		this.oneComponentAtATime = oneComponentAtATime;
+	}
+
+	public void setComponentCountPerTime(int count) {
+		this.componentCountPerTime = count;
+	}
+
+	public int getComponentCountPerTime() {
+		return componentCountPerTime;
 	}
 
 	/**
