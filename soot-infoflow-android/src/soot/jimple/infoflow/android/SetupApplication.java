@@ -31,20 +31,13 @@ import org.xml.sax.SAXException;
 import org.xmlpull.v1.XmlPullParserException;
 
 import heros.solver.Pair;
-import soot.Body;
 import soot.G;
-import soot.Local;
 import soot.Main;
 import soot.PackManager;
-import soot.RefType;
 import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
-import soot.Type;
 import soot.Unit;
-import soot.Value;
-import soot.jimple.Jimple;
-import soot.jimple.JimpleBody;
 import soot.jimple.Stmt;
 import soot.jimple.infoflow.AbstractInfoflow;
 import soot.jimple.infoflow.IInfoflow;
@@ -107,10 +100,7 @@ import soot.jimple.infoflow.taintWrappers.ITaintPropagationWrapper;
 import soot.jimple.infoflow.taintWrappers.ITaintWrapperDataFlowAnalysis;
 import soot.jimple.infoflow.util.SystemClassHandler;
 import soot.jimple.infoflow.values.IValueProvider;
-import soot.jimple.internal.JIdentityStmt;
-import soot.jimple.internal.JInvokeStmt;
 import soot.options.Options;
-import soot.util.Chain;
 import soot.util.HashMultiMap;
 import soot.util.MultiMap;
 
@@ -656,19 +646,6 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			}
 		}
 
-		{
-			/** all false
-			Chain<SootClass> clses = Scene.v().getClasses();
-			for (SootClass cls : clses) {
-				if (!cls.getName().contains("org.peace") || cls.getName().contains(".R")) continue;
-				L("cal cb 0", "Handling cls: " + cls);
-				for (SootMethod sm : cls.getMethods()) {
-					L("cal cb 0", "Handling sm: " + sm + ", body: " + sm.hasActiveBody());
-				}
-			}
-             **/
-		}
-
 		try {
 			int depthIdx = 0;
 			boolean hasChanged = true;
@@ -701,52 +678,12 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 				}
 				isInitial = false;
 
-				/** reachable false
-				{
-					Chain<SootClass> clses = Scene.v().getClasses();
-					for (SootClass cls : clses) {
-						if (!cls.getName().contains("org.peace") || cls.getName().contains(".R")) continue;
-						L("cal cb 3", "Handling cls: " + cls);
-						for (SootMethod sm : cls.getMethods()) {
-							L("cal cb 3", "Handling sm: " + sm + ", body: " + sm.hasActiveBody());
-						}
-					}
-				}
-                 **/
-
 				// Run the soot-based operations
 				constructCallgraphInternal();
-
-				/** reachable false
-				{
-					Chain<SootClass> clses = Scene.v().getClasses();
-					for (SootClass cls : clses) {
-						if (!cls.getName().contains("org.peace")) continue;
-						L("cal cb 1", "Handling cls: " + cls);
-						for (SootMethod sm : cls.getMethods()) {
-							L("cal cb 1", "Handling sm: " + sm + ", body: " + sm.hasActiveBody());
-						}
-					}
-				}
-				 **/
-
 				if (!Scene.v().hasCallGraph())
 					throw new RuntimeException("No callgraph in Scene even after creating one. That's very sad "
 							+ "and should never happen.");
 				PackManager.v().getPack("wjtp").apply();
-
-				/** reachable true
-				{
-					Chain<SootClass> clses = Scene.v().getClasses();
-					for (SootClass cls : clses) {
-						if (!cls.getName().contains("org.peace")) continue;
-						L("cal cb 2", "Handling cls: " + cls);
-						for (SootMethod sm : cls.getMethods()) {
-							L("cal cb 2", "Handling sm: " + sm + ", body: " + sm.hasActiveBody());
-						}
-					}
-				}
-				 **/
 
 				// Creating all callgraph takes time and memory. Check whether
 				// the solver has been aborted in the meantime
@@ -758,21 +695,15 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 				}
 
 				// Collect the results of the soot-based phases
-				if (this.callbackMethods.putAll(jimpleClass.getCallbackMethods())) {
+				if (this.callbackMethods.putAll(jimpleClass.getCallbackMethods()))
 					hasChanged = true;
-                    L("daqi - get new cb 1: " + jimpleClass.getCallbackMethods().size());
-				}
 
-				if (entrypoints.addAll(jimpleClass.getDynamicManifestComponents())) {
+				if (entrypoints.addAll(jimpleClass.getDynamicManifestComponents()))
 					hasChanged = true;
-					L("daqi - get new cb 2: " + jimpleClass.getDynamicManifestComponents().size());
-				}
 
 				// Collect the XML-based callback methods
-				if (collectXmlBasedCallbackMethods(lfp, jimpleClass)) {
+				if (collectXmlBasedCallbackMethods(lfp, jimpleClass))
 					hasChanged = true;
-					L("daqi - get new cb 3: ");
-				}
 
 				// Avoid callback overruns. If we are beyond the callback limit
 				// for one entry point, we may not collect any further callbacks
@@ -1074,12 +1005,6 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 		// of callback methods
 		entryPointCreator = createEntryPointCreator(component);
 		SootMethod dummyMainMethod = entryPointCreator.createDummyMain();
-		L("daqi - dummy mtd body: " + dummyMainMethod.retrieveActiveBody());
-		SootClass dSc = Scene.v().getSootClass("dummyMainClass");
-		L("daqi - dummyMainCls: " + dSc);
-		for (SootMethod dScMt : dSc.getMethods()) {
-			L("daqi - dummy mtd: " + dScMt.retrieveActiveBody());
-		}
 		Scene.v().setEntryPoints(Collections.singletonList(dummyMainMethod));
 		if (!dummyMainMethod.getDeclaringClass().isInScene())
 			Scene.v().addClass(dummyMainMethod.getDeclaringClass());
@@ -1114,16 +1039,6 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			classpath += File.pathSeparator + additionalClasspath;
 		logger.debug("soot classpath: " + classpath);
 		return classpath;
-	}
-
-	static Logger L = LoggerFactory.getLogger("daqi");
-
-	public static void L(String msg) {
-        L.info(msg);
-	}
-
-	public static void L(String prefix, String msg) {
-		L.info(prefix + " - " + msg);
 	}
 
 	/**
@@ -1171,111 +1086,8 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 		logger.info("Loading dex files...");
 		Scene.v().loadNecessaryClasses();
 
-		Chain<SootClass> clses = Scene.v().getClasses();
-		/** all false
-		for (SootClass cls : clses) {
-			if (!cls.getName().contains("org.peace") || cls.getName().contains(".R")) continue;
-			L("is 0", "Handling cls: " + cls);
-			for (SootMethod sm : cls.getMethods()) {
-				L("is 0", "Handling sm: " + sm + ", body: " + sm.hasActiveBody());
-			}
-		}
-		 **/
-
 		// Make sure that we have valid Jimple bodies
 		PackManager.v().getPack("wjpp").apply();
-
-		/** all false
-		clses = Scene.v().getClasses();
-		for (SootClass cls : clses) {
-			if (!cls.getName().contains("org.peace") || cls.getName().contains(".R")) continue;
-			L("is 1", "Handling cls: " + cls);
-			for (SootMethod sm : cls.getMethods()) {
-				L("is 1", "Handling sm: " + sm + ", body: " + sm.hasActiveBody());
-			}
-		}
-		 **/
-
-        clses = Scene.v().getClasses();
-		for (SootClass cls : clses) {
-			if (cls.getName().contains("MainActivity222")) {
-				logger.info("daqi - find cls: " + cls + ", " + System.identityHashCode(cls));
-				logger.info("daqi - cls resolving level: " + cls.resolvingLevel());
-                for (SootMethod sm : cls.getMethods()) {
-                	if (!sm.getName().contains("onCreate")) continue;
-                    logger.info("daqi - sm: " + sm + ", declaring resolving : "
-							+ System.identityHashCode(sm.getDeclaringClass())
-							+ ", " + sm.getDeclaringClass() + ", level: " + sm.getDeclaringClass().resolvingLevel());
-                    Body bd = sm.retrieveActiveBody();
-					logger.info("daqi - reachable mt 0: " + sm + ", " + System.identityHashCode(sm));
-					Chain<Unit> units = bd.getUnits();
-					boolean findBindInvok = false;
-					JInvokeStmt bindUnit = null;
-					for (Unit u : units) {
-						if (u instanceof JInvokeStmt) {
-							JInvokeStmt stmt = (JInvokeStmt) u;
-							SootMethod sm2 = stmt.getInvokeExpr().getMethod();
-							if (sm2.getDeclaringClass().getName().equals("butterknife.ButterKnife")
-									&& sm2.getName().equals("bind")) {
-								logger.info("daqi - find bind invoke: " + stmt);
-								logger.info("arg type: " + stmt.getInvokeExpr().getArg(0).getType());
-								findBindInvok = true;
-								bindUnit = stmt;
-								break;
-							}
-						}
-					}
-					if (findBindInvok) {
-						logger.info("daqi - sm0: " + sm);
-						logger.info("daqi - body0: " + sm.retrieveActiveBody());
-						for (Unit u : units) {
-							logger.info("daqi - unit: " + u.getClass() + ", " + u);
-							if (u instanceof JIdentityStmt) {
-								JIdentityStmt jis = (JIdentityStmt) u;
-								logger.info("daqi - : " + jis.getLeftOp() + ", " + jis.getRightOp());
-							}
-						}
-						Body newBd = Jimple.v().newBody(sm);
-						for (Unit u : units) {
-							if (u != bindUnit) {
-								newBd.getUnits().add(u);
-							} else {
-								String cmpName = bindUnit.getInvokeExpr().getArg(0).getType().toString();
-								String clsName =  cmpName+ "_" + "ViewBinding";
-								SootClass sc = Scene.v().getSootClass(clsName);
-								List<SootMethod> sms = sc.getMethods();
-								SootMethod sm3 = sc.getMethod("void <init>(" +  cmpName + ",android.view.View)");
-								Local l0 = Jimple.v().newLocal("$r100", RefType.v(sc));
-								newBd.getLocals().add(l0);
-								Stmt st = Jimple.v().newAssignStmt(l0, Jimple.v().newNewExpr(RefType.v(sc)));
-								newBd.getUnits().add(st);
-								Local l1 = Jimple.v().newLocal("$r101", RefType.v(cmpName));
-								newBd.getLocals().add(l1);
-								st = Jimple.v().newIdentityStmt(l1, Jimple.v().newThisRef(RefType.v(cmpName)));
-								newBd.getUnits().add(st);
-								Local l2 = Jimple.v().newLocal("$r102", RefType.v("android.view.Window"));
-								newBd.getLocals().add(l2);
-								st = Jimple.v().newAssignStmt(l2,
-										Jimple.v().newVirtualInvokeExpr(l1,
-												Scene.v().makeMethodRef(Scene.v().makeSootClass(cmpName), "getWindow", new ArrayList<Type>(), RefType.v("android.view.Window"), false)));
-								newBd.getUnits().add(st);
-								Local l3 = Jimple.v().newLocal("$r103", RefType.v("android.view.View"));
-								newBd.getLocals().add(l3);
-								st = Jimple.v().newAssignStmt(l3,
-										Jimple.v().newVirtualInvokeExpr(l2,
-												Scene.v().makeMethodRef(Scene.v().makeSootClass("android.view.Window"), "getDecorView", new ArrayList<Type>(), RefType.v("android.view.View"), false)));
-								newBd.getUnits().add(st);
-								List<Value> args = new ArrayList<>();
-								args.add(l1);
-								args.add(l3);
-								newBd.getUnits().add(Jimple.v().newInvokeStmt(Jimple.v().newSpecialInvokeExpr(l0, sm3.makeRef(), args)));
-							}
-						}
-						sm.setActiveBody(newBd);
-					}
-				}
-			}
-		}
 
 		// Patch the callgraph to support additional edges. We do this now,
 		// because during callback discovery, the context-insensitive callgraph
@@ -1468,7 +1280,6 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 *                                be read.
 	 */
 	public InfoflowResults runInfoflow() throws IOException, XmlPullParserException {
-		logger.info("daqi - runInfoflow 2");
 		// If we don't have a source/sink file by now, we cannot run the data
 		// flow analysis
 		String sourceSinkFile = config.getAnalysisFileConfig().getSourceSinkFile();
