@@ -1,5 +1,6 @@
 package soot.jimple.infoflow.cfg;
 
+import java.lang.annotation.Target;
 import java.util.Collections;
 
 import soot.Body;
@@ -92,6 +93,13 @@ public class LibraryClassPatcher {
 		}
 		final SootField fldWhat = tmp;
 
+		tmp = sc.getFieldUnsafe("android.os.Handler target");
+		if (tmp == null) {
+			tmp = Scene.v().makeSootField("target", RefType.v(Scene.v().getSootClass("android.os.Handler")));
+			sc.addField(tmp);
+		}
+		final SootField fldTarget = tmp;
+
 		tmp = sc.getFieldUnsafe("int arg1");
 		if (tmp == null) {
 			tmp = Scene.v().makeSootField("arg1", IntType.v());
@@ -122,6 +130,10 @@ public class LibraryClassPatcher {
 				public void injectCode(Body body, Local messageLocal) {
 					body.getUnits()
 							.add(Jimple.v().newAssignStmt(
+									Jimple.v().newInstanceFieldRef(messageLocal, fldTarget.makeRef()),
+									body.getParameterLocal(0)));
+					body.getUnits()
+							.add(Jimple.v().newAssignStmt(
 									Jimple.v().newInstanceFieldRef(messageLocal, fldWhat.makeRef()),
 									body.getParameterLocal(1)));
 				}
@@ -137,6 +149,10 @@ public class LibraryClassPatcher {
 
 				@Override
 				public void injectCode(Body body, Local messageLocal) {
+					body.getUnits()
+							.add(Jimple.v().newAssignStmt(
+									Jimple.v().newInstanceFieldRef(messageLocal, fldTarget.makeRef()),
+									body.getParameterLocal(0)));
 					body.getUnits()
 							.add(Jimple.v().newAssignStmt(
 									Jimple.v().newInstanceFieldRef(messageLocal, fldWhat.makeRef()),
@@ -165,6 +181,10 @@ public class LibraryClassPatcher {
 				public void injectCode(Body body, Local messageLocal) {
 					body.getUnits()
 							.add(Jimple.v().newAssignStmt(
+									Jimple.v().newInstanceFieldRef(messageLocal, fldTarget.makeRef()),
+									body.getParameterLocal(0)));
+					body.getUnits()
+							.add(Jimple.v().newAssignStmt(
 									Jimple.v().newInstanceFieldRef(messageLocal, fldWhat.makeRef()),
 									body.getParameterLocal(1)));
 					body.getUnits()
@@ -187,6 +207,10 @@ public class LibraryClassPatcher {
 
 				@Override
 				public void injectCode(Body body, Local messageLocal) {
+					body.getUnits()
+							.add(Jimple.v().newAssignStmt(
+									Jimple.v().newInstanceFieldRef(messageLocal, fldTarget.makeRef()),
+									body.getParameterLocal(0)));
 					body.getUnits()
 							.add(Jimple.v().newAssignStmt(
 									Jimple.v().newInstanceFieldRef(messageLocal, fldWhat.makeRef()),
