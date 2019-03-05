@@ -17,6 +17,8 @@ import com.google.common.cache.LoadingCache;
 import heros.solver.IDESolver;
 import heros.solver.Pair;
 import heros.solver.PathEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import soot.ArrayType;
 import soot.FastHierarchy;
 import soot.Hierarchy;
@@ -30,10 +32,12 @@ import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
 import soot.Value;
+import soot.jimple.AssignStmt;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
 import soot.jimple.ReturnStmt;
+import soot.jimple.StaticInvokeExpr;
 import soot.jimple.Stmt;
 import soot.jimple.infoflow.InfoflowManager;
 import soot.jimple.infoflow.data.Abstraction;
@@ -68,6 +72,8 @@ import soot.util.MultiMap;
  *
  */
 public class SummaryTaintWrapper implements IReversibleTaintWrapper {
+
+	private static Logger logger = LoggerFactory.getLogger("daqi-SummaryTaintWrapper");
 
 	private static final int MAX_HIERARCHY_DEPTH = 10;
 
@@ -691,6 +697,13 @@ public class SummaryTaintWrapper implements IReversibleTaintWrapper {
 		if (t.isField() && stmt.containsInvokeExpr() && stmt.getInvokeExpr() instanceof InstanceInvokeExpr) {
 			InstanceInvokeExpr iiexpr = (InstanceInvokeExpr) stmt.getInvokeExpr();
 			return manager.getAccessPathFactory().createAccessPath(iiexpr.getBase(), fields, baseType, types,
+					t.taintSubFields(), false, true, ArrayTaintType.ContentsAndLength);
+		}
+
+        logger.warn("Handling stmt: " + stmt);
+		if (t.isField() && stmt.containsInvokeExpr() && stmt.getInvokeExpr() instanceof StaticInvokeExpr && stmt instanceof AssignStmt) {
+			Value leftOp = ((AssignStmt) stmt).getLeftOp();
+			return manager.getAccessPathFactory().createAccessPath(leftOp, fields, baseType, types,
 					t.taintSubFields(), false, true, ArrayTaintType.ContentsAndLength);
 		}
 
