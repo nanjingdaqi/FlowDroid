@@ -1356,6 +1356,10 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			return null;
 		}
 
+		if (config.getOneComponentAtATime() || config.getComponentCountPerTime() > 0) {
+			serializeResultsStart();
+		}
+
 		// In one-component-at-a-time, we do not have a single entry point
 		// creator. For every entry point, run the data flow analysis.
 		if (config.getOneComponentAtATime()) {
@@ -1388,7 +1392,11 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			processEntryPoint(sourcesAndSinks, resultAggregator, -1, null, null);
 
 		// Write the results to disk if requested
-		serializeResults(resultAggregator.getAggregatedResults(), resultAggregator.getLastICFG());
+		if (!config.getOneComponentAtATime() && config.getComponentCountPerTime() == 0) {
+			serializeResults(resultAggregator.getAggregatedResults(), resultAggregator.getLastICFG());
+		} else {
+			serializeResultsEnd();
+		}
 
 		// We return the aggregated results
 		this.infoflow = null;
@@ -1492,6 +1500,10 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 		// Notify our result handlers
 		for (ResultsAvailableHandler handler : resultsAvailableHandlers)
 			handler.onResultsAvailable(resultAggregator.getLastICFG(), resultAggregator.getLastResults());
+
+		if (config.getOneComponentAtATime() || config.getComponentCountPerTime() > 0) {
+			serializeResults(resultAggregator.getLastResults(), resultAggregator.getLastICFG());
+		}
 	}
 
 	/**
@@ -1513,6 +1525,33 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 				System.err.println("Could not write data flow results to file: " + ex.getMessage());
 				ex.printStackTrace();
 			}
+		}
+	}
+
+	InfoflowResultsSerializer partResultSerializer = new InfoflowResultsSerializer();
+
+	private void serializeResultsStart() {
+		try {
+			String resultsFile = config.getAnalysisFileConfig().getOutputFile();
+			partResultSerializer.serializeStart(resultsFile);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void serializeResultsContent(InfoflowResults results, IInfoflowCFG cfg) {
+		try {
+			partResultSerializer.searializePartResult(results, cfg, config);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void serializeResultsEnd() {
+	    try {
+			partResultSerializer.serializeEnd();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 

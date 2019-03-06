@@ -91,6 +91,45 @@ public class InfoflowResultsSerializer {
 		writer.close();
 	}
 
+	private XMLStreamWriter partWriter;
+
+	public void serializeStart(String fileName) throws Exception {
+		OutputStream out = new FileOutputStream(fileName);
+		XMLOutputFactory factory = XMLOutputFactory.newInstance();
+		partWriter = factory.createXMLStreamWriter(out, "UTF-8");
+
+		partWriter.writeStartDocument("UTF-8", "1.0");
+		partWriter.writeStartElement(XmlConstants.Tags.root);
+		partWriter.writeAttribute(XmlConstants.Attributes.fileFormatVersion, FILE_FORMAT_VERSION + "");
+	}
+
+	public void searializePartResult(InfoflowResults results, IInfoflowCFG icfg,
+									 InfoflowConfiguration config) throws Exception {
+		this.icfg = icfg;
+		this.config = config;
+		// Write out the data flow results
+		if (results != null && !results.isEmpty()) {
+			partWriter.writeStartElement(XmlConstants.Tags.results);
+			writeDataFlows(results, partWriter);
+			partWriter.writeEndElement();
+		}
+
+		// Write out performance data
+		InfoflowPerformanceData performanceData = results.getPerformanceData();
+		if (performanceData != null && !performanceData.isEmpty()) {
+			partWriter.writeStartElement(XmlConstants.Tags.performanceData);
+			partWriter.writeAttribute(XmlConstants.Attributes.terminationState,
+					terminationStateToString(results.getTerminationState()));
+			writePerformanceData(performanceData, partWriter);
+			partWriter.writeEndElement();
+		}
+	}
+
+	public void serializeEnd() throws Exception {
+		partWriter.writeEndDocument();
+		partWriter.close();
+	}
+
 	/**
 	 * Converts the termination state from the enumeration to a human-readable
 	 * string
