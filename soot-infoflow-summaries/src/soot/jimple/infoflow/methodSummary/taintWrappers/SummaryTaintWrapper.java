@@ -17,6 +17,8 @@ import com.google.common.cache.LoadingCache;
 import heros.solver.IDESolver;
 import heros.solver.Pair;
 import heros.solver.PathEdge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import soot.ArrayType;
 import soot.FastHierarchy;
 import soot.Hierarchy;
@@ -30,10 +32,12 @@ import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
 import soot.Value;
+import soot.jimple.AssignStmt;
 import soot.jimple.DefinitionStmt;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
 import soot.jimple.ReturnStmt;
+import soot.jimple.StaticInvokeExpr;
 import soot.jimple.Stmt;
 import soot.jimple.infoflow.InfoflowManager;
 import soot.jimple.infoflow.data.Abstraction;
@@ -68,6 +72,8 @@ import soot.util.MultiMap;
  *
  */
 public class SummaryTaintWrapper implements IReversibleTaintWrapper {
+
+	public static final Logger logger = LoggerFactory.getLogger("daqi - " + SummaryTaintWrapper.class.getSimpleName());
 
 	private static final int MAX_HIERARCHY_DEPTH = 10;
 
