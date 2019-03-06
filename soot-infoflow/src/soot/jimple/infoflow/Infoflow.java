@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+import daqi.SourceSinkInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -235,8 +236,8 @@ public class Infoflow extends AbstractInfoflow {
 	 * 
 	 * @param sourcesSinks The sources and sinks to be used
 	 */
-	protected void runAnalysis(final ISourceSinkManager sourcesSinks) {
-		runAnalysis(sourcesSinks, null);
+	protected SourceSinkInfo runAnalysis(final ISourceSinkManager sourcesSinks) {
+		return runAnalysis(sourcesSinks, null);
 	}
 
 	/**
@@ -246,7 +247,7 @@ public class Infoflow extends AbstractInfoflow {
 	 * @param additionalSeeds Additional seeds at which to create A ZERO fact even
 	 *                        if they are not sources
 	 */
-	private void runAnalysis(final ISourceSinkManager sourcesSinks, final Set<String> additionalSeeds) {
+	private SourceSinkInfo runAnalysis(final ISourceSinkManager sourcesSinks, final Set<String> additionalSeeds) {
 		final InfoflowPerformanceData performanceData = new InfoflowPerformanceData();
 		try {
 			// Clear the data from previous runs
@@ -296,7 +297,7 @@ public class Infoflow extends AbstractInfoflow {
 				logger.info("Callgraph has {} edges", Scene.v().getCallGraph().size());
 
 			if (!config.isTaintAnalysisEnabled())
-				return;
+				return null;
 
 			// Make sure that we have a path builder factory
 			if (pathBuilderFactory == null)
@@ -441,6 +442,16 @@ public class Infoflow extends AbstractInfoflow {
 					}
 					logger.info("Source lookup done, found {} sources and {} sinks.",
 							forwardProblem.getInitialSeeds().size(), sinkCount);
+
+					if (!SourceSinkInfo.force && SourceSinkInfo.maxSourcePerTime > 0
+							&& forwardProblem.getInitialSeeds().size() > SourceSinkInfo.maxSourcePerTime) {
+						return new SourceSinkInfo(forwardProblem.getInitialSeeds().size(), sinkCount);
+					}
+
+					if (!SourceSinkInfo.force && SourceSinkInfo.maxSinkPerTime > 0
+							&& sinkCount > SourceSinkInfo.maxSinkPerTime) {
+						return new SourceSinkInfo(forwardProblem.getInitialSeeds().size(), sinkCount);
+					}
 
 					// Update the performance statistics
 					performanceData.setSourceCount(forwardProblem.getInitialSeeds().size());
@@ -727,6 +738,8 @@ public class Infoflow extends AbstractInfoflow {
 			results.addException(ex.getClass().getName() + ": " + ex.getMessage() + "\n" + stacktrace.toString());
 			logger.error("Exception during data flow analysis", ex);
 		}
+
+		return null;
 	}
 
 	/**

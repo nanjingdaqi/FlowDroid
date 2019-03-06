@@ -19,12 +19,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
+import daqi.SourceSinkInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -1147,7 +1149,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 */
 	protected static interface IInPlaceInfoflow extends IInfoflow {
 
-		public void runAnalysis(final ISourceSinkManager sourcesSinks, SootMethod entryPoint);
+		public SourceSinkInfo runAnalysis(final ISourceSinkManager sourcesSinks, SootMethod entryPoint);
 
 	}
 
@@ -1184,9 +1186,9 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 		}
 
 		@Override
-		public void runAnalysis(final ISourceSinkManager sourcesSinks, SootMethod entryPoint) {
+		public SourceSinkInfo runAnalysis(final ISourceSinkManager sourcesSinks, SootMethod entryPoint) {
 			this.dummyMainMethod = entryPoint;
-			super.runAnalysis(sourcesSinks);
+			return super.runAnalysis(sourcesSinks);
 		}
 
 	}
@@ -1369,10 +1371,11 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 				processEntryPoint(sourcesAndSinks, resultAggregator, entrypointWorklist.size(), entrypoint, null);
 			}
 		} else if (config.getComponentCountPerTime() > 0) {
-            final int count = config.getComponentCountPerTime();
-			List<SootClass> entrypointWorklist = new ArrayList<>(entrypoints);
-			List<SootClass> targetEntrypoints = new ArrayList<>(count);
+            final int MAX_COUNT = config.getComponentCountPerTime();
+			List<SootClass> entrypointWorklist = new LinkedList<>(entrypoints);
+			List<SootClass> targetEntrypoints = new LinkedList<>();
 			int i = 0;
+			int count = MAX_COUNT;
 			while (!entrypointWorklist.isEmpty()) {
 				SootClass entrypoint = entrypointWorklist.remove(0);
 				targetEntrypoints.add(entrypoint);
@@ -1384,7 +1387,18 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 					}
 					info += "]";
 					logger.warn("daqi, running on components: " + info);
-					processEntryPoint(sourcesAndSinks, resultAggregator, -1, null, targetEntrypoints);
+					if (count == 1) SourceSinkInfo.force = true;
+					else SourceSinkInfo.force = false;
+					SourceSinkInfo result = processEntryPoint(sourcesAndSinks, resultAggregator, -1, null, targetEntrypoints);
+					if (result != null && count > 1) {
+						for (SootClass ep : targetEntrypoints) {
+							entrypointWorklist.add(0, ep);
+						}
+						count = count / 2;
+						logger.warn("daqi, reduce to count: " + count);
+					} else {
+						count = MAX_COUNT;
+					}
 					targetEntrypoints.clear();
 				}
 			}
@@ -1414,7 +1428,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 * @param numEntryPoints   The total number of runs (for logging)
 	 * @param entrypoint       The current entry point to analyze
 	 */
-	protected void processEntryPoint(ISourceSinkDefinitionProvider sourcesAndSinks,
+	protected SourceSinkInfo processEntryPoint(ISourceSinkDefinitionProvider sourcesAndSinks,
 			MultiRunResultAggregator resultAggregator, int numEntryPoints, SootClass entrypoint,
 									 List<SootClass> targetEntrypoints) {
 		long beforeEntryPoint = System.nanoTime();
@@ -1466,7 +1480,10 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 		// Create and run the data flow tracker
 		infoflow = createInfoflow();
 		infoflow.addResultsAvailableHandler(resultAggregator);
-		infoflow.runAnalysis(sourceSinkManager, entryPointCreator.getGeneratedMainMethod());
+		SourceSinkInfo result = infoflow.runAnalysis(sourceSinkManager, entryPointCreator.getGeneratedMainMethod());
+		if (result != null) {
+			return result;
+		}
 
 		// Update the statistics
 		if (config.getLogSourcesAndSinks() && infoflow.getCollectedSources() != null)
@@ -1504,6 +1521,8 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 		if (config.getOneComponentAtATime() || config.getComponentCountPerTime() > 0) {
 			serializeResultsContent(resultAggregator.getLastResults(), resultAggregator.getLastICFG());
 		}
+
+		return null;
 	}
 
 	/**

@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import daqi.SourceSinkInfo;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -93,6 +94,8 @@ public class MainClass {
 	private static final String OPTION_ONE_SOURCE = "os";
 	private static final String OPTION_ONE_COMPONENT = "ot";
 	private static final String OPTION_COMPONENT_COUNT_PER_TIME = "ccpt";
+	private static final String OPTION_MAX_SOURCE_PER_TIME = "msopt";
+	private static final String OPTION_MAX_SINK_PER_TIME = "msipt";
 	private static final String OPTION_SEQUENTIAL_PATHS = "sp";
 	private static final String OPTION_LOG_SOURCES_SINKS = "ls";
 	private static final String OPTION_MERGE_DEX_FILES = "d";
@@ -179,6 +182,8 @@ public class MainClass {
 		options.addOption(OPTION_ONE_COMPONENT, "onecomponentatatime", false,
 				"Analyze one Android component at a time");
 		options.addOption(OPTION_COMPONENT_COUNT_PER_TIME, "componentcount", true, "每次运行的组件数量");
+		options.addOption(OPTION_MAX_SOURCE_PER_TIME, "maxsourcepertime", true, "每次运行时的source数量上限");
+		options.addOption(OPTION_MAX_SINK_PER_TIME, "maxsinkpertime", true, "每次运行时的sink数量上限");
 		options.addOption(OPTION_ONE_SOURCE, "onesourceatatime", false, "Analyze one source at a time");
 		options.addOption(OPTION_SEQUENTIAL_PATHS, "sequentialpathprocessing", false,
 				"Process the result paths sequentially instead of in parallel");
@@ -689,6 +694,16 @@ public class MainClass {
 			Integer count = getIntOption(cmd, OPTION_COMPONENT_COUNT_PER_TIME);
 			if (count != null)
 				config.setComponentCountPerTime(count);
+		}
+		{
+			Integer count = getIntOption(cmd, OPTION_MAX_SOURCE_PER_TIME);
+			if (count != null)
+				SourceSinkInfo.maxSourcePerTime = count;
+		}
+		{
+			Integer count = getIntOption(cmd, OPTION_MAX_SINK_PER_TIME);
+			if (count != null)
+				SourceSinkInfo.maxSinkPerTime = count;
 		}
 
 		// Optional features
