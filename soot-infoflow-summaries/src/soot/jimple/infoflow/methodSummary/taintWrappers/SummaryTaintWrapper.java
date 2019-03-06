@@ -694,6 +694,17 @@ public class SummaryTaintWrapper implements IReversibleTaintWrapper {
 					t.taintSubFields(), false, true, ArrayTaintType.ContentsAndLength);
 		}
 
+        logger.warn("Handling stmt: " + stmt);
+		if (t.isField() && stmt.containsInvokeExpr() && stmt.getInvokeExpr() instanceof StaticInvokeExpr) {
+			if (stmt instanceof AssignStmt) {
+				Value leftOp = ((AssignStmt) stmt).getLeftOp();
+				return manager.getAccessPathFactory().createAccessPath(leftOp, fields, baseType, types,
+						t.taintSubFields(), false, true, ArrayTaintType.ContentsAndLength);
+			} else {
+				return null;
+			}
+		}
+
 		throw new RuntimeException("Could not convert taint to access path: " + t + " at " + stmt);
 	}
 
