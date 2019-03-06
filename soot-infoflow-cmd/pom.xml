@@ -106,6 +106,8 @@
 			<groupId>de.tud.sse</groupId>
 			<artifactId>soot-infoflow-android</artifactId>
 			<version>2.7.1</version>
+			<!--<scope>system</scope>-->
+			<!--<systemPath>/Users/daqi/.m2/repository/de/tud/sse/soot-infoflow-android/2.6.1/soot-infoflow-android-2.6.1.jar</systemPath>-->
 		</dependency>
 		<dependency>
 			<groupId>de.tud.sse</groupId>
@@ -139,6 +141,10 @@
 	</dependencies>
 
 	<repositories>
+        <repository>
+            <id>my-local-repo</id>
+            <url>file:///Users/daqi/.m2/repository</url>
+        </repository>
 		<repository>
 			<id>soot-snapshot</id>
 			<name>Soot snapshot server</name>

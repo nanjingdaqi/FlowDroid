@@ -195,6 +195,10 @@
 	
 	<repositories>
 		<repository>
+			<id>my-local-repo</id>
+			<url>file:///Users/daqi/.m2/repository</url>
+		</repository>
+		<repository>
 			<id>soot-snapshot</id>
 			<name>Soot snapshot server</name>
 			<url>https://soot-build.cs.uni-paderborn.de/nexus/repository/soot-snapshot/</url>
