@@ -1502,7 +1502,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			handler.onResultsAvailable(resultAggregator.getLastICFG(), resultAggregator.getLastResults());
 
 		if (config.getOneComponentAtATime() || config.getComponentCountPerTime() > 0) {
-			serializeResults(resultAggregator.getLastResults(), resultAggregator.getLastICFG());
+			serializeResultsContent(resultAggregator.getLastResults(), resultAggregator.getLastICFG());
 		}
 	}
 
