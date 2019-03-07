@@ -96,6 +96,7 @@ public class MainClass {
 	private static final String OPTION_COMPONENT_COUNT_PER_TIME = "ccpt";
 	private static final String OPTION_MAX_SOURCE_PER_TIME = "msopt";
 	private static final String OPTION_MAX_SINK_PER_TIME = "msipt";
+	private static final String OPTION_APPLICATION_SINGLE = "as";
 	private static final String OPTION_SEQUENTIAL_PATHS = "sp";
 	private static final String OPTION_LOG_SOURCES_SINKS = "ls";
 	private static final String OPTION_MERGE_DEX_FILES = "d";
@@ -184,6 +185,7 @@ public class MainClass {
 		options.addOption(OPTION_COMPONENT_COUNT_PER_TIME, "componentcount", true, "每次运行的组件数量");
 		options.addOption(OPTION_MAX_SOURCE_PER_TIME, "maxsourcepertime", true, "每次运行时的source数量上限");
 		options.addOption(OPTION_MAX_SINK_PER_TIME, "maxsinkpertime", true, "每次运行时的sink数量上限");
+		options.addOption(OPTION_APPLICATION_SINGLE, "appsingle", false, "不把application与组件混合");
 		options.addOption(OPTION_ONE_SOURCE, "onesourceatatime", false, "Analyze one source at a time");
 		options.addOption(OPTION_SEQUENTIAL_PATHS, "sequentialpathprocessing", false,
 				"Process the result paths sequentially instead of in parallel");
@@ -705,6 +707,7 @@ public class MainClass {
 			if (count != null)
 				SourceSinkInfo.maxSinkPerTime = count;
 		}
+		if (cmd.hasOption(OPTION_APPLICATION_SINGLE)) SourceSinkInfo.applicationSingle = true;
 
 		// Optional features
 		if (cmd.hasOption(OPTION_NO_STATIC_FLOWS))

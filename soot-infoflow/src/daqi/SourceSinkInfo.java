@@ -5,6 +5,7 @@ public class SourceSinkInfo {
     public static int maxSourcePerTime = -1;
     public static int maxSinkPerTime = -1;
     public static boolean force = false;
+    public static boolean applicationSingle = false;
 
     public int sourceCount, sinkCount;
 

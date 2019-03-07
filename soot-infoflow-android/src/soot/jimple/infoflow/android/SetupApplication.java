@@ -1714,6 +1714,8 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			if (includingComponents == null) components.add(component);
 			else components.addAll(includingComponents);
 
+			if (SourceSinkInfo.applicationSingle) return components;
+
 			String applicationName = manifest.getApplicationName();
 			if (applicationName != null && !applicationName.isEmpty())
 				components.add(Scene.v().getSootClassUnsafe(applicationName));
