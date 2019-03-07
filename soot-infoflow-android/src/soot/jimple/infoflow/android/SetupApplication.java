@@ -1392,8 +1392,9 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 					else SourceSinkInfo.force = false;
 					SourceSinkInfo result = processEntryPoint(sourcesAndSinks, resultAggregator, -1, null, targetEntrypoints);
 					if (result != null && count > 1) {
-						for (SootClass ep : targetEntrypoints) {
-							entrypointWorklist.add(0, ep);
+						int sz = targetEntrypoints.size();
+						for (int j = sz - 1; j >= 0; j--) {
+							entrypointWorklist.add(0, targetEntrypoints.get(j));
 						}
 						count = count / 2;
 						logger.warn("daqi, reduce to count: " + count);
