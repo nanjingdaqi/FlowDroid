@@ -107,6 +107,7 @@ public class InfoflowResultsSerializer {
 									 InfoflowConfiguration config) throws Exception {
 		this.icfg = icfg;
 		this.config = config;
+		if (results == null) return;
 		// Write out the data flow results
 		if (results != null && !results.isEmpty()) {
 			partWriter.writeStartElement(XmlConstants.Tags.results);
