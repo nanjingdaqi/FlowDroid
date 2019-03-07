@@ -26,6 +26,7 @@ import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
+import daqi.ResultHandler;
 import daqi.SourceSinkInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1410,6 +1411,11 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 			serializeResults(resultAggregator.getAggregatedResults(), resultAggregator.getLastICFG());
 		} else {
 			serializeResultsEnd();
+		}
+
+		String resultFile = config.getAnalysisFileConfig().getOutputFile();
+		if (resultFile != null && new File(resultFile).exists()) {
+			ResultHandler.handleResult(new File(resultFile));
 		}
 
 		// We return the aggregated results
